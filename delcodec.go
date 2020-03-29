@@ -12,9 +12,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
     "fmt"
     "os"
+    "path/filepath"
+    "strings"
 )
 
 import (
@@ -34,6 +37,64 @@ func main() {
         fmt.Println("Consequently this program is also licensed under the GPL v3 (http://www.gnu.org/licenses/gpl.html)")
         fmt.Println("Source code for this program may be found at (https://github.com/Causticity/delcodec)")
     }
-    
-    flag.Usage()
+
+	var in = flag.String("in", "", "Input image file; must be either grayscale png or dei encoded")
+
+	flag.Parse()
+	
+	out, process, err := validateFile(*in)
+	
+    if err != nil {
+        fmt.Println("Error validating file <", *in, ">: ", err)
+        os.Exit (1)
+    }
+	
+    // Check that the input file exists
+	if _, err := os.Stat(*in); os.IsNotExist(err) {
+	    fmt.Println("Input file does not exist: " + *in)
+	}
+	
+    err = process(*in, out)
+    if err != nil {
+        fmt.Println("Error processing file <", *in, ">: ", err)
+        os.Exit (1)
+    }
+}
+
+// Verify that the input file name is valid (has either a .png or .dei suffix).
+// Returns the name of the output file, the function to use to process (either
+// encode or decode), and an error code or nil.
+func validateFile(in string) (string, (func(string, string) error), error) {
+    inext := filepath.Ext(in)
+    var proc procFunc
+    var out string
+    var err error
+    if strings.EqualFold(inext, ".png") {
+        proc = encode
+        out = strings.TrimSuffix(in, inext) + ".dei"
+        err = nil
+    } else if strings.EqualFold(inext, ".dei") {
+        proc = decode
+        out = strings.TrimSuffix(in, inext) + ".png"
+        err = nil
+    } else {
+        out = ""
+        proc = nil
+        err = errors.New("Invalid input file extension: " + inext)
+    }
+    return out, proc, err
+}
+
+type procFunc func(string, string) error
+
+func encode(in string, out string) error {
+    fmt.Println("Encoding " + in + " to " + out)
+    fmt.Println("unimplemented")
+    return nil
+}
+
+func decode(in string, out string) error {
+    fmt.Println("Decoding " + in + " to " + out)
+    fmt.Println("unimplemented")
+    return nil
 }
