@@ -87,14 +87,30 @@ func validateFile(in string) (string, (func(string, string) error), error) {
 
 type procFunc func(string, string) error
 
+
+// TODO: Separate file stuff from encode/decode, so it can happen in memory.
 func encode(in string, out string) error {
     fmt.Println("Encoding " + in + " to " + out)
     fmt.Println("unimplemented")
+    // Read image
+    // Set up quincunx lattice (just use one)
+    // Take the fft and extract the DC and Nyquist rows and columns
+    // compute gradient image on the lattice only
+    // compute deldensity of the gradient
+    // Huffman gradient based on deldensity
+    // Huffman of DC and Nyquist based on their own line statistics
+    // Write file
     return nil
 }
 
 func decode(in string, out string) error {
     fmt.Println("Decoding " + in + " to " + out)
     fmt.Println("unimplemented")
+    // Extract and Huffman decode DC and Nyquist lines
+    // Huffman decode gradient
+    // Create gradient image with interspersed zeroes
+    // In Fourier domain, remove aliases, undo gradient, add DC and Nyquist
+    // Inverse FFT to get image
+    // Write image
     return nil
 }
