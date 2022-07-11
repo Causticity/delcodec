@@ -21,10 +21,10 @@ import (
 )
 
 import (
-//    "github.com/Causticity/sipp/simage"
-//    "github.com/Causticity/sipp/sgrad"
-//    "github.com/Causticity/sipp/shist"
-//    "github.com/Causticity/sipp/sfft"
+    simage "github.com/Causticity/sipp/simage"
+//   . "github.com/Causticity/sipp/sgrad"
+//   . "github.com/Causticity/sipp/shist"
+//   . "github.com/Causticity/sipp/sfft"
 )
 
 func main() {
@@ -38,22 +38,28 @@ func main() {
         fmt.Println("Source code for this program may be found at (https://github.com/Causticity/delcodec)")
     }
 
-	var in = flag.String("in", "", "Input image file; must be either grayscale png or dei encoded")
+	var in = flag.String("in", "", "Input image filename; must be either grayscale png or dei encoded")
 
 	flag.Parse()
 	
+	if *in == "" {
+		flag.Usage()
+		os.Exit(0)
+	}
+
 	out, process, err := validateFile(*in)
-	
+
     if err != nil {
         fmt.Println("Error validating file <", *in, ">: ", err)
         os.Exit (1)
     }
-	
+
     // Check that the input file exists
 	if _, err := os.Stat(*in); os.IsNotExist(err) {
 	    fmt.Println("Input file does not exist: " + *in)
+        os.Exit (1)
 	}
-	
+
     err = process(*in, out)
     if err != nil {
         fmt.Println("Error processing file <", *in, ">: ", err)
@@ -80,37 +86,60 @@ func validateFile(in string) (string, (func(string, string) error), error) {
     } else {
         out = ""
         proc = nil
-        err = errors.New("Invalid input file extension: " + inext)
+        if inext == "" {
+        	err = errors.New("Input file has no extension")
+        } else {
+        	err = errors.New("Invalid input file extension: " + inext[1:])
+        }
     }
     return out, proc, err
 }
 
 type procFunc func(string, string) error
 
-
-// TODO: Separate file stuff from encode/decode, so it can happen in memory.
 func encode(in string, out string) error {
     fmt.Println("Encoding " + in + " to " + out)
     fmt.Println("unimplemented")
-    // Read image
+    image, err := simage.Read(in)
+    if err != nil {
+    	return err
+    }
+    dst := encodeImage(image)
+	writer, err := os.Create(out)
+	if err != nil {
+		return err
+	}
+	_, err = writer.Write(dst)
+	if err != nil {
+		return err
+	}
+    return nil
+}
+
+// TODO: return an in-memory DEI object?
+func encodeImage(image simage.SippImage) []byte {
     // Set up quincunx lattice (just use one)
     // Take the fft and extract the DC and Nyquist rows and columns
     // compute gradient image on the lattice only
     // compute deldensity of the gradient
     // Huffman gradient based on deldensity
     // Huffman of DC and Nyquist based on their own line statistics
-    // Write file
     return nil
 }
 
 func decode(in string, out string) error {
     fmt.Println("Decoding " + in + " to " + out)
     fmt.Println("unimplemented")
+    // Read dei file into memory
+    // Write image
+    return nil
+}
+
+func decodeImage(dei []byte) simage.SippImage {
     // Extract and Huffman decode DC and Nyquist lines
     // Huffman decode gradient
     // Create gradient image with interspersed zeroes
     // In Fourier domain, remove aliases, undo gradient, add DC and Nyquist
     // Inverse FFT to get image
-    // Write image
     return nil
 }
