@@ -19,7 +19,7 @@ type DCvalue int32
 
 // A NyguistValue is the value at the Nyquist frequency of a row or column of a
 // SippImage, represented as a fixed-point sum over the row or column, using
-// alternating +-1 modulation during the summation.
+// -1^(x+y) modulation during the summation.
 type NyquistValue int32
 
 var fpScale = 4.0	// Equivalent to shift left by 2. We compute the shifted
@@ -29,14 +29,14 @@ var fpScale = 4.0	// Equivalent to shift left by 2. We compute the shifted
 // DCvalues, one per image row. 
 func DCcolumn(src SippImage) (ret []DCvalue) {
 	ret = make([]DCvalue, src.Bounds().Dy())
-	var avg float64
+	var sum float64
 	width := src.Bounds().Dx()
 	for y, _ := range ret {
-		avg = 0.0
+		sum = 0.0
 		for x := 0; x < width; x++ {
-			avg = avg + (src.Val(x, y) * fpScale)
+			sum = sum + (src.Val(x, y) * fpScale)
 		}
-		ret[y] = DCvalue(math.Round(avg / float64(width)))
+		ret[y] = DCvalue(math.Round(sum / float64(width)))
 	}
 	return
 }
@@ -45,14 +45,58 @@ func DCcolumn(src SippImage) (ret []DCvalue) {
 // DCvalues, one per image column. 
 func DCrow(src SippImage) (ret []DCvalue) {
 	ret = make([]DCvalue, src.Bounds().Dx())
-	var avg float64
+	var sum float64
 	height := src.Bounds().Dy()
 	for x, _ := range ret {
-		avg = 0.0
+		sum = 0.0
 		for y := 0; y < height; y++ {
-			avg = avg + (src.Val(x, y) * fpScale)
+			sum = sum + (src.Val(x, y) * fpScale)
 		}
-		ret[x] = DCvalue(math.Round(avg / float64(height)))
+		ret[x] = DCvalue(math.Round(sum / float64(height)))
+	}
+	return
+}
+
+// NyquistColumn returns the Nyquist values of each row of an image, as as slice
+// of NyquistValues, one per image row. The value is computed by summing the
+// pixels, each multiplied by (-1)^(x+y).
+func NyquistColumn(src SippImage) (ret []NyquistValue) {
+	ret = make([]NyquistValue, src.Bounds().Dy())
+	var sum float64
+	width := src.Bounds().Dx()
+	shiftStart := 1.0
+	shift := shiftStart
+	for y, _ := range ret {
+		sum = 0.0
+		for x := 0; x < width; x++ {
+			sum = sum + (src.Val(x, y) * fpScale * shift)
+			shift = -shift
+		}
+		ret[y] = sum
+		shiftStart = -shiftStart
+		shift = shiftStart
+	}
+	return
+}
+
+// NyquistRow returns the Nyquist values of each column of an image, as as slice
+// of NyquistValues, one per image column. The value is computed by summing the
+// pixels, each multiplied by (-1)^(x+y).
+func NyquistRow(src SippImage) (ret []NyquistValue) {
+	ret = make([]NyquistValue, src.Bounds().Dx())
+	var sum float64
+	height := src.Bounds().Dx()
+	shiftStart := 1.0
+	shift := shiftStart
+	for x, _ := range ret {
+		sum = 0.0
+		for y := 0; y < height; y++ {
+			sum = sum + (src.Val(x, y) * fpScale * shift)
+			shift = -shift
+		}
+		ret[x] = sum
+		shiftStart = -shiftStart
+		shift = shiftStart
 	}
 	return
 }
