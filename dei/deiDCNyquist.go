@@ -72,7 +72,7 @@ func NyquistColumn(src SippImage) (ret []NyquistValue) {
 			sum = sum + (src.Val(x, y) * fpScale * shift)
 			shift = -shift
 		}
-		ret[y] = sum
+		ret[y] = NyquistValue(sum)
 		shiftStart = -shiftStart
 		shift = shiftStart
 	}
@@ -94,7 +94,7 @@ func NyquistRow(src SippImage) (ret []NyquistValue) {
 			sum = sum + (src.Val(x, y) * fpScale * shift)
 			shift = -shift
 		}
-		ret[x] = sum
+		ret[x] = NyquistValue(sum)
 		shiftStart = -shiftStart
 		shift = shiftStart
 	}
